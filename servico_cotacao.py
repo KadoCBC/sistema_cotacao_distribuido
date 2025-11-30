@@ -91,7 +91,7 @@ def main():
     disjuntor = circuitBreaker()
 
     # enquanto não temos bd
-    ativos = ["maça", "banana", "ouro"]
+    ativos = ["maça", "laranja", "ouro"]
     ultimas_cotacoes = [] #lista de dicionarios
 
     # Conecta ao broker
