@@ -115,7 +115,6 @@ if __name__ == "__main__":
             conexao, endereco_cliente = socket_tcp.accept()
             
             # Cria e inicia a Thread
-            # Note que não passamos 'topicos' nem 'lock' pois são globais
             thread = threading.Thread(target=thread_gerenciar_cliente, args=(conexao, endereco_cliente))
             thread.start()
             

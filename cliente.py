@@ -4,23 +4,40 @@ import json
 HOST = "localhost"
 PORT = 1100
 
-s = socket.create_connection((HOST, PORT))
+def main():
+    topico = input("Digite o tópico para se inscrever: ")
+    try:
+        with socket.create_connection((HOST, PORT)) as s:
+            dados = json.dumps({
+                "tipo": "sub",
+                "topico": topico
+            }) + "\n"
+            s.sendall(dados.encode('utf-8'))
+            print(f"Inscrito no tópico '{topico}'. Aguardando mensagens...\n")
 
-try:
-    # Envia solicitação para se inscrever no tópico
-    dados = json.dumps({
-        "tipo": "sub",
-        "topico": "noticias"
-    }) + "\n"
-    s.sendall(dados.encode('utf-8'))
+            buffer = ""
+            while True:
+                dados_recebidos = s.recv(1024)
+                if not dados_recebidos:
+                    break
+                
+                buffer += dados_recebidos.decode('utf-8')
+                
+                while '\n' in buffer:
+                    linha, buffer = buffer.split('\n', 1)
+                    linha = linha.strip()
+                    if not linha:
+                        continue
+                    
+                    try:
+                        msg_json = json.loads(linha)
+                        mensagem = msg_json.get("mensagem")
+                        if mensagem:
+                            print(f"[MENSAGEM RECEBIDA] {mensagem}")
+                    except json.JSONDecodeError:
+                        print("JSON inválido recebido")
+    except Exception as e:
+        print(f"Erro na conexão com o broker: {e}")
 
-    print("Inscrito no tópico 'noticias'. Aguardando mensagens...\n")
-
-    # Fica aguardando mensagens do broker
-    while True:
-        msg = s.recv(1024).decode('utf-8')
-        if msg:
-            print(f"Mensagem recebida: {msg}")
-finally:
-    print("Encerrando subscriber")
-    s.close()
+if __name__ == "__main__":
+    main()

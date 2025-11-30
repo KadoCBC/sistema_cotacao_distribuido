@@ -7,6 +7,7 @@ HOST = "localhost"
 PORT = 1100 # Broker
 PORT_HISTORICO = 1300 # Servico Historico
 
+
 # Classe que implementa a 
 class circuitBreaker:
 
@@ -18,9 +19,17 @@ class circuitBreaker:
         self.ultima_falha = 0 # timestamp da última falha
     
     def simular_chamada_api(self, ativo):
-        if random.random() < 0.1:  # 10% de chance de falha
+        if random.random() < 0.3:  # 10% de chance de falha
             raise Exception("Falha na API")
-        return 20 + random.random()  #Simulação de resposta da API
+        
+        TOPICOS_ATIVOS ={
+            "maça": "frutas",
+            "ouro": "metais",
+            "laranja": "frutas" 
+        }
+        topico = TOPICOS_ATIVOS.get(ativo, "geral") #geral é default
+        preco = 20 + random.random() #Simulação de resposta da API preco
+        return  {"ativo": ativo, "preco": preco, "topico": topico }
     
     def chamar_api(self, ativo):
 
@@ -96,18 +105,23 @@ def main():
         while True:
             for ativo in ativos:
                 
-                preco = disjuntor.chamar_api(ativo)
+                retorno_api = disjuntor.chamar_api(ativo)
 
                 preco_antigo = ultimas_cotacoes.get(ativo)
+                preco = retorno_api.get("preco")
 
                 if preco != preco_antigo and preco is not None:
+
                     ultimas_cotacoes[ativo] = preco
 
-                    print(preco)
+                    ativo = retorno_api.get("ativo")
+                    topico = retorno_api.get("topico")
+
+                    
                     dados = json.dumps({
                         "tipo": "pub",
-                        "topico": "noticias", #topico teste
-                        "mensagem": f"preço:{preco}"
+                        "topico": topico, 
+                        "mensagem": f"ativo:{ativo} preço:{preco}"
                     }) + "\n"
 
                     s.sendall(dados.encode('utf-8'))
