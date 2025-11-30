@@ -8,11 +8,12 @@ import time
 HOST = "localhost"
 PORTA_ESCRITA = 1300      # Nova porta para receber writes do servico_cotacao
 PORTA_CONSULTA = 1200    # Porta para RESPONDER dados (Read)
-NUM_SHARDS = 3
+NUM_SHARDS = 2
 
 # determina a shard com base no nome do ativo
-def determinar_shard(ativo_nome):
-    soma = sum(ord(c) for c in ativo_nome)
+def determinar_shard(nome_ativo):
+    nome = nome_ativo.strip().lower()
+    soma = sum(ord(c) for c in nome)
     return soma % NUM_SHARDS
 
 # Função para buscar últimas transações de um ativo -> VERIFICAR ISSO DEPOIS

@@ -29,13 +29,8 @@ def main():
                     if not linha:
                         continue
                     
-                    try:
-                        msg_json = json.loads(linha)
-                        mensagem = msg_json.get("mensagem")
-                        if mensagem:
-                            print(f"[MENSAGEM RECEBIDA] {mensagem}")
-                    except json.JSONDecodeError:
-                        print("JSON inválido recebido")
+                    print(linha)
+
     except Exception as e:
         print(f"Erro na conexão com o broker: {e}")
 

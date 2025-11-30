@@ -65,7 +65,7 @@ def thread_gerenciar_cliente(conexao, endereco_cliente):
                         
                         with lock:
                             if topico in topicos:
-                                # Prepara mensagem para repassar (MUITO IMPORTANTE POR O \n)
+                                # Prepara mensagem para repassar
                                 msg_final = msg + "\n"
                                 
                                 # Copia a lista para iterar com segurança
@@ -74,6 +74,7 @@ def thread_gerenciar_cliente(conexao, endereco_cliente):
                                 for sub in lista_clientes:
                                     try:
                                         sub.sendall(msg_final.encode('utf-8'))
+                                        print(msg_final.encode('utf-8'))
                                     except:
                                         # Se der erro ao enviar, assume que caiu e remove
                                         print(f"Removendo cliente morto de {topico}")

@@ -19,7 +19,7 @@ class circuitBreaker:
         self.ultima_falha = 0 # timestamp da última falha
     
     def simular_chamada_api(self, ativo):
-        if random.random() < 0.3:  # 10% de chance de falha
+        if random.random() < 0.1:  # 10% de chance de falha
             raise Exception("Falha na API")
         
         TOPICOS_ATIVOS ={
@@ -40,6 +40,7 @@ class circuitBreaker:
                 self.estado = "MEIO-ABERTO"
             else:
                 print("CIRCUITO ABERTO: Chamada bloqueada.")
+                time.sleep(3) #espera um pouco antes de tentar de novo
                 return None
         
         #Tentativa de conexão com a API
@@ -90,8 +91,8 @@ def main():
     disjuntor = circuitBreaker()
 
     # enquanto não temos bd
-    ativos = ["maça", "banana", "laranja"]
-    ultimas_cotacoes = {}
+    ativos = ["maça", "banana", "ouro"]
+    ultimas_cotacoes = [] #lista de dicionarios
 
     # Conecta ao broker
     try:
@@ -101,36 +102,43 @@ def main():
         return
     
     try:
-        #loop para percurrer a lista de ativos (temporariomente)
+        #loop para percurrer a lista de ativos
         while True:
             for ativo in ativos:
                 
-                retorno_api = disjuntor.chamar_api(ativo)
+                retorno_api = disjuntor.chamar_api(ativo) #retorno da API
 
-                preco_antigo = ultimas_cotacoes.get(ativo)
-                preco = retorno_api.get("preco")
+                if retorno_api != None:
 
-                if preco != preco_antigo and preco is not None:
+                    preco = retorno_api.get("preco")
 
-                    ultimas_cotacoes[ativo] = preco
-
-                    ativo = retorno_api.get("ativo")
-                    topico = retorno_api.get("topico")
-
+                    if len(ultimas_cotacoes) > 0:
+                        ultimo_produto = ultimas_cotacoes[len(ultimas_cotacoes)-1]
+                        preco_antigo = ultimo_produto.get("preco")
                     
-                    dados = json.dumps({
-                        "tipo": "pub",
-                        "topico": topico, 
-                        "mensagem": f"ativo:{ativo} preço:{preco}"
-                    }) + "\n"
+                    preco_antigo = None 
+                
+                    if preco != preco_antigo:
 
-                    s.sendall(dados.encode('utf-8'))
+                        ultimas_cotacoes.append(retorno_api)
 
-                    # Envia para o serviço de histórico
-                    enviar_historico(ativo, preco)
+                        ativo = retorno_api.get("ativo")
+                        topico = retorno_api.get("topico")
 
-                    print("Conectado como publisher no tópico 'noticias'\n")
-                time.sleep(30)  # Aguarda 5 segundos antes da próxima cotação
+                        # Envia para o broker
+                        dados = json.dumps({
+                            "tipo": "pub",
+                            "topico": topico, 
+                            "mensagem": f"ativo:{ativo} preco:{preco}"
+                        }) + "\n"
+
+                        s.sendall(dados.encode('utf-8'))
+
+                        # Envia para o serviço de histórico
+                        enviar_historico(ativo, preco)
+
+                        print(f"Publicado como publisher no tópico: {topico}\n")
+                        time.sleep(15)  # Aguarda 5 segundos antes da próxima cotação
     
     except KeyboardInterrupt:
         print("Encerrando publisher")
