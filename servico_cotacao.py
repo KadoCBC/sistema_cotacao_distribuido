@@ -4,7 +4,8 @@ import time
 import random
 
 HOST = "localhost"
-PORT = 1100
+PORT = 1100 # Broker
+PORT_HISTORICO = 1300 # Servico Historico
 
 # Classe que implementa a 
 class circuitBreaker:
@@ -60,19 +61,35 @@ class circuitBreaker:
                 self.estado = "ABERTO"
                 print("CIRCUITO ABERTO: Muitas falhas.")
             return None
-          
+
+def enviar_historico(ativo, preco):
+    try:
+        with socket.create_connection((HOST, PORT_HISTORICO)) as s:
+            dados = json.dumps({
+                "ativo": ativo,
+                "preco": preco
+            }) + "\n"
+            s.sendall(dados.encode('utf-8'))
+            print(f"Enviado para histórico: {ativo} -> {preco}")
+    except Exception as e:
+        print(f"Erro ao enviar para histórico: {e}")
+
+
 def main():
+
     random.seed() # Inicializa gerador de números aleatórios
-
     disjuntor = circuitBreaker()
-
-    # Conecta ao broker
-    s = socket.create_connection((HOST, PORT))
 
     # enquanto não temos bd
     ativos = ["maça", "banana", "laranja"]
-
     ultimas_cotacoes = {}
+
+    # Conecta ao broker
+    try:
+        s = socket.create_connection((HOST, PORT))
+    except Exception as e:
+        print(f"Erro ao conectar ao broker: {e}")
+        return
     
     try:
         #loop para percurrer a lista de ativos (temporariomente)
@@ -94,8 +111,12 @@ def main():
                     }) + "\n"
 
                     s.sendall(dados.encode('utf-8'))
+
+                    # Envia para o serviço de histórico
+                    enviar_historico(ativo, preco)
+
                     print("Conectado como publisher no tópico 'noticias'\n")
-                time.sleep(5)  # Aguarda 5 segundos antes da próxima cotação
+                time.sleep(30)  # Aguarda 5 segundos antes da próxima cotação
     
     except KeyboardInterrupt:
         print("Encerrando publisher")

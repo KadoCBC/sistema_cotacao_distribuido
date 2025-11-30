@@ -44,7 +44,7 @@ def thread_gerenciar_cliente(conexao, endereco_cliente):
                     tipo = dados_json.get("tipo")
                     topico = dados_json.get("topico")
 
-                    # --- LÓGICA DE SUBSCRIBE ---
+                    # SUB
                     if tipo == "sub":
                         with lock: # Bloqueia para mexer no dict compartilhado
                             if topico not in topicos:
@@ -58,7 +58,7 @@ def thread_gerenciar_cliente(conexao, endereco_cliente):
                         eh_inscrito = True
                         print(f"Cliente {endereco_cliente} INSCRITO em {topico}")
 
-                    # --- LÓGICA DE PUBLISH ---
+                    # PUB
                     elif tipo == "pub":
                         msg = dados_json.get('mensagem', '')
                         print(f"Recebido PUB em {topico}: {msg}")
